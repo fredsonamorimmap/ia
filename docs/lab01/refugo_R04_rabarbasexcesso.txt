@@ -1,0 +1,6 @@
+- Maquina
+	- velocidade injeção: alta
+	- força fechamento: baixa
+	- pressão injeção: alta
+	- temperatura cilindro: alta
+

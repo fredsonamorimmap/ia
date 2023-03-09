@@ -1,0 +1,8 @@
+- Maquinas
+	- tempo resfriamento: baixo
+	- temperatura cilindro: alta
+	- pressao injecao: alta
+	- temperatura molde: baixa
+
+- Material
+	- viscosidade: baixa

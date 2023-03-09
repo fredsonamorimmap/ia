@@ -1,0 +1,1273 @@
+-----------
+-- ROTINA
+-----------
+--seed
+--split
+--reescala
+--instancia classe regra modelo
+-- treina fit
+-- testa/predict
+
+-- VALIDACAO CRUZADA
+-- pipeline: ver mais abaixo
+-- minimizar aleatoriedade na decisão de escolha de modelo se ok para inferir ou não.
+
+(grupos? KFold? usar?)
+
+*********************
+
+https://cursos.alura.com.br/formacao-machine-learning
+
+*********************
+
+
+https://cursos.alura.com.br/course/reducao-dimensionalidade/task/53767
+
+* SelectKBEST x RFE x RFEcv x
+
+import pandas as pd
+
+resultados_exames = pd.read_csv("folder/dados.csv")
+resultados_exames
+
+valores_exames = resultados_exames.drop(columns=["id", "diagnostico"])
+diagnostico = resultados_exames.diagnostico
+
+from sklearn.model_selection import train_test_split
+from numpy import random
+
+SEED = 123143
+random.seed(SEED)
+
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames, diagnostico)
+
+from sklearn.ensemble import RandomForestClassifier
+
+classificador = RandomForestClassifier(n_estimators = 100)
+classificador.fit(treino_x, treino_y)
+
+print(classificador.score(teste_x, teste_y))
+
+#--valores faltantes
+# verificar
+resultados_exames.isnull().sum()
+
+valores_exames_v1 = valores_exames.drop(columns="exame_33")
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from numpy import random
+
+SEED = 123143
+random.seed(SEED)
+
+valores_exames = resultados_exames.drop(columns=["id", "diagnostico"])
+diagnostico = resultados_exames.diagnostico
+valores_exames_v1 = valores_exames.drop(columns="exame_33")
+
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames_v1, 
+                                                        diagnostico)
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames_v1, diagnostico, test_size = 0.3)
+
+classificador = RandomForestClassifier(n_estimators = 100)
+classificador.fit(treino_x, treino_y)
+print("Resultado da classificação %.2f%%" % (classificador.score(teste_x, teste_y)* 100))
+
+
+#bobo
+
+from sklearn.dummy import DummyClassifier
+SEED = 123143
+random.seed(SEED)
+classificador_bobo = DummyClassifier(strategy = "most_frequent")
+classificador_bobo.fit(treino_x, treino_y)
+print("Resultado da classificação boba %.2f%%" % (classificador_bobo.score(teste_x, teste_y)* 100))
+#66,67%
+
+
+##bobo2  stratified
+from sklearn.dummy import DummyClassifier
+dummy_stratified = DummyClassifier(strategy='stratified')
+dummy_stratified.fit(treino_x, treino_y)
+previsoes = dummy_stratified.predict(teste_x) OU previsoes = dummy_mostfrequent.predict(teste_x)
+acuracia = accuracy_score(teste_y, previsoes) * 100
+print("A acurácia do dummy foi %.2f%%" % acuracia)
+
+###escalando:
+scaler = StandardScaler()
+scaler.fit(raw_treino_x)
+treino_x = scaler.transform(raw_treino_x)
+teste_x = scaler.transform(raw_teste_x)
+
+
+
+#visualizacao
+
+
+# melt
+# melt tranforma colunas em numero desejado colunas finais . baseado num ID e resto será para as LINHAS do novo DATAFRAME ou Array.
+
+# no caso abaixo primeiro concatenou com diagnostico o x
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# ainda valores_exames_v1
+
+dados_plot = pd.concat([diagnostico, valores_exames_v1], axis = 1)
+dados_plot = pd.melt(dados_plot, id_vars="diagnostico", 
+                 var_name="exames",
+                 value_name="valores")
+
+plt.figure(figsize=(10,10))
+
+sns.violinplot(x = "exames", y = "valores", 
+               hue = "diagnostico", data = dados_plot)
+
+plt.xticks(rotation = 90)
+
+dados_plot = pd.concat([diagnostico, valores_exames_v1.iloc[:,0:10]], axis = 1)
+
+#melhorando visualizacao para analise
+
+# StandardScaler some com dados originais convertendo-os para numerais escalados entre si
+# escalador padronizado . StandardScaler (0--2 ..? etc)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler (foi para _V2)
+
+
+padronizador = StandardScaler()
+padronizador.fit(valores_exames_v1)
+valores_exames_v2 = padronizador.transform(valores_exames_v1)
+# valores_exames_v2 SAÍDA AQUI É ARRAY NUMPY
+# valores_exames_v2 deve ser um DATAFRAME
+valores_exames_v2 = pd.DataFrame(data = valores_exames_v2,
+                                columns = valores_exames_v1.keys())
+
+dados_plot = pd.concat([diagnostico, valores_exames_v2.iloc[:,0:10]], axis = 1)
+dados_plot = pd.melt(dados_plot, id_vars="diagnostico", 
+                 var_name="exames",
+                 value_name="valores")
+
+plt.figure(figsize=(10,10))
+
+# com split = True ja pra dividir em dois cada lado M e B
+sns.violinplot(x = "exames", y = "valores", 
+               hue = "diagnostico", data = dados_plot,
+              split = True)
+
+plt.xticks(rotation = 90)
+
+#funcao grafico
+
+
+
+def grafico_violino(valores, inicio, fim):
+
+    dados_plot = pd.concat([diagnostico, valores.iloc[:,inicio:fim]], axis = 1)
+    dados_plot = pd.melt(dados_plot, id_vars="diagnostico", 
+                         var_name="exames",
+                         value_name="valores")
+
+    plt.figure(figsize=(10,10))
+
+    sns.violinplot(x = "exames", y = "valores", hue = "diagnostico", 
+                    data = dados_plot, split = True)
+
+    plt.xticks(rotation = 90)
+
+grafico_violino(valores_exames_v2, 10, 21)
+
+
+#funcao classificadora
+
+def classificar(valores):
+    SEED = 123143
+    random.seed(SEED)
+
+    treino_x, teste_x, treino_y, teste_y = 
+    train_test_split(valores, diagnostico, test_size = 0.3)
+
+    classificador = RandomForestClassifier(n_estimators = 100)
+    classificador.fit(treino_x, treino_y)
+    classificador.fit(treino_x, treino_y)
+    print("Resultado da classificação %.2f%%" % (classificador.score(teste_x, teste_y)* 100))
+	
+# 92.98%
+
+
+#correlacao mapa calor
+
+#
+# ja retorna a corr de um DATAFRAME
+valores_exames_v3.corr() 
+
+matriz_correlacao = valores_exames_v3.corr()
+sns.heatmap(matriz_correlacao)
+
+matriz_correlacao = valores_exames_v3.corr()
+plt.figure(figsize = (17, 15))
+sns.heatmap(matriz_correlacao, annot = True, fmt = ".1f")
+
+matriz_correlacao_v1 =  matriz_correlacao[matriz_correlacao>0.99]
+matriz_correlacao_v1
+
+
+matriz_correlacao_v2 = matriz_correlacao_v1.sum()
+variaveis_correlacionadas = matriz_correlacao_v2[matriz_correlacao_v2>1]
+variaveis_correlacionadas
+# exame_1 1.997855 exame_3 1.997855 exame_22 1.993708 exame_24 1.993708
+
+valores_exames_v4 = valores_exames_v3.drop(columns=variaveis_correlacionadas.keys())
+classificar(valores_exames_v4)
+#deu escroto pois retiramos TODAS as ALTAMENTE CORRELACIONADAS e nao deixamos cada um de cada PAR!
+# melhorar isso:
+valores_exames_v5 = valores_exames_v3.drop(columns=["exame_3", "exame_24"])
+classificar(valores_exames_v5)
+
+
+#
+
+matriz_correlacao_v1 =  matriz_correlacao[matriz_correlacao>0.99]
+matriz_correlacao_v1
+matriz_correlacao_v2 = matriz_correlacao_v1.sum()
+variaveis_correlacionadas = matriz_correlacao_v2[matriz_correlacao_v2>1]
+variaveis_correlacionadas
+#errado valores_exames_v4 = valores_exames_v3.drop(columns=variaveis_correlacionadas.keys())
+valores_exames_v5 = valores_exames_v3.drop(columns=["exame_3", "exame_24"])
+classificar(valores_exames_v5)
+# 92.98%
+
+
+# selecao automatizada de K melhores features:
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
+selecionar_kmelhores = SelectKBest(chi2, 5)
+selecionar_kmelhores
+SEED = 1234
+random.seed(SEED)
+# usando valores_exames_v1 pois antes da normalizacao pois no #5 está negativo ja normalizado
+valores_exames_v6 = valores_exames_v1.drop(columns=["exame_4", "exame_29", "exame_3", "exame_24"])
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames_v6, diagnostico, test_size = 0.3)
+selecionar_kmelhores.fit(treino_x, treino_y)
+treino_kbest = selecionar_kmelhores.transform(treino_x) #obtendo treino com 5 features
+teste_kbest = selecionar_kmelhores.transform(teste_x) #obtendo teste com 5 features
+
+#até aqui olhando apenas a ACURACIA
+# MATRIZ de confusão (usa dummy)
+from sklearn.metrics import confusion_matrix
+matriz_confusao = confusion_matrix(teste_y, classificador.predict(teste_kbest))
+matriz_confusao
+# ver 
+plt.figure(figsize = (10, 8))
+sns.set(font_scale = 2)
+sns.heatmap(matriz_confusao, annot = True, fmt = "d").set(xlabel = "Predição", ylabel = "Real")
+
+
+# RFE razoável, mas a ver RFEcv (cross validation)
+# atencao , RFE para o caso exemplo resultou PIOR eficiencia classificacao
+#fazendo similar SelectKBEST mas agora com RFE 
+from sklearn.feature_selection import RFE
+SEED = 1234
+random.seed(SEED)
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames_v6,
+                                                       diagnostico,
+                                                       test_size = 0.3)
+classificador = RandomForestClassifier(n_estimators=100, random_state = 1234)
+classificador.fit(treino_x, treino_y)
+selecionador_rfe = RFE(estimator = classificador, n_features_to_select = 5, step = 1)
+selecionador_rfe.fit(treino_x, treino_y)
+treino_rfe = selecionador_rfe.transform(treino_x)
+teste_rfe = selecionador_rfe.transform(teste_x)
+classificador.fit(treino_rfe, treino_y)
+matriz_confusao = confusion_matrix(teste_y, classificador.predict(teste_rfe))
+plt.figure(figsize = (10, 8))
+sns.set(font_scale = 2)
+sns.heatmap(matriz_confusao, annot = True, fmt = "d").set(xlabel = "Predição", ylabel = "Real")
+print("Resultado da classificação %.2f%%" % (classificador.score(teste_rfe, teste_y)* 100))
+# Resultado da classificação 90.06% aff
+
+
+#RFEcv
+from sklearn.feature_selection import RFECV
+SEED = 1234
+random.seed(SEED)
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames_v6,
+                                                       diagnostico,
+                                                       test_size = 0.3)
+classificador = RandomForestClassifier(n_estimators=100, random_state = 1234)
+classificador.fit(treino_x, treino_y)
+selecionador_rfecv = RFECV(estimator = classificador, cv = 5, scoring = "accuracy", step = 1)
+selecionador_rfecv.fit(treino_x, treino_y)
+treino_rfecv = selecionador_rfecv.transform(treino_x)
+teste_rfecv = selecionador_rfecv.transform(teste_x)
+classificador.fit(treino_rfecv, treino_y)
+matriz_confusao = confusion_matrix(teste_y, classificador.predict(teste_rfecv))
+plt.figure(figsize = (10, 8))
+sns.set(font_scale = 2)
+sns.heatmap(matriz_confusao, annot = True, fmt = "d").set(xlabel = "Predição", ylabel = "Real")
+print("Resultado da classificação %.2f%%" % (classificador.score(teste_rfecv, teste_y)* 100))
+
+# ver features
+treino_x.columns[selecionador_rfecv.support_]
+
+selecionador_rfecv.grid_scores_
+
+#plotar
+import matplotlib.pyplot as plt
+plt.figure(figsize=(14, 8))
+plt.xlabel("Número de exames")
+plt.ylabel("Acurácia")
+plt.plot(range(1, len(selecionador_rfecv.grid_scores_) + 1), selecionador_rfecv.grid_scores_)
+plt.show
+
+##
+#VISUALIZACAO
+#PCA
+#PCA tenta manter o maior numero de inf das dimensões ignoradas reduzindo a menor numero dimensões.
+# exemplo.  a 2 dimensoes.
+from sklearn.decomposition import PCA
+pca = PCA(n_components = 2)
+valores_exames_v8 = pca.fit_transform(valores_exames_v6)
+plt.figure(figsize=(14, 8))
+sns.scatterplot(x = valores_exames_v8[:,0], y = valores_exames_v8[:,1], hue = diagnostico)
+# mas usando v6 foi sem padronização ou normalização. podemos usar o v5 usando o NORMALIZADO.
+#..
+from sklearn.decomposition import PCA
+pca = PCA(n_components = 2)
+valores_exames_v8 = pca.fit_transform(valores_exames_v5)
+plt.figure(figsize=(14, 8))
+sns.scatterplot(x = valores_exames_v8[:,0], y = valores_exames_v8[:,1], hue = diagnostico)
+#
+#TSNE
+#TSNE (mantendo similaridade distancias>...)
+from sklearn.manifolds import TSNE
+tsne = TSNE(n_components = 2)
+valores_exames_v9 = tsne.fit_transform(valores_exames_v5)
+plt.figure(figsize=(14, 8))
+sns.scatterplot(x = valores_exames_v9[:,0], y = valores_exames_v9[:,1], hue = diagnostico)
+#
+# analisar grafico no limítrofe para determinar o que diferenciou de uma classificacao para a outra
+
+
+
+#################################################
+curso 2.1 sklearn #1
+
+curso 2 hiperparametros #1
+
+import pandas as pd
+uri = "https://gist.githubusercontent.com/guilhermesilveira/e99a526b2e7ccc6c3b70f53db43a87d2/raw/1605fc74aa778066bf2e6695e24d53cf65f2f447/machine-learning-carros-simulacao.csv"
+dados = pd.read_csv(uri).drop(columns=["Unnamed: 0"], axis=1)
+dados.head()
+
+OUTRO
+import pandas as pd
+uri = "https://gist.githubusercontent.com/guilhermesilveira/2d2efa37d66b6c84a722ea627a897ced/raw/10968b997d885cbded1c92938c7a9912ba41c615/tracking.csv"
+pd.read_csv(uri)
+##
+import pandas as pd
+uri = "https://gist.githubusercontent.com/guilhermesilveira/2d2efa37d66b6c84a722ea627a897ced/raw/10968b997d885cbded1c92938c7a9912ba41c615/tracking.csv"
+dados = pd.read_csv(uri)
+dados.head()
+
+
+
+
+# accuracy
+
+from sklearn.metrics import accuracy_score
+taxa_de_acerto = accuracy_score(testes_classes, previsoes)
+print("Taxa de acerto", taxa_de_acerto * 100)
+
+# split para separar treino de testes a partir de um dominio de dados
+
+#rename renomear renomeando
+mapa={
+     'home':'Página inicial', 
+     'services':'Serviços', 
+     'contact':'Contato', 
+     'purchased':'Comprou'
+}
+dados = dados.rename(columns = mapa)
+
+
+curso 2 hiperparametros #1. fim.
+#################################################
+
+#graphviz
+from sklearn.tree import export_graphviz
+dot_data = export_graphviz(modelo, out_file=None)
+grafico = graphviz.Source(dot_data)
+grafico
+-- precisa importar mas tambem INSTALAR no sistema. no linux o apt-get graphviz resolve.
+
+-- VALIDACAO CRUZADA
+https://cursos.alura.com.br/course/machine-learning-validando-modelos/task/48271
+-- pipeline: ver mais abaixo
+
+
+-- cv=5 padrao. quanto ao SEED mesmo alterando seed nao alterando aleatoriedade
+from sklearn.model_selection import cross_validate
+SEED = 301
+np.random.seed(SEED)
+modelo = DecisionTreeClassifier(max_depth=2)
+results = cross_validate(modelo, x, y, cv = 5, return_train_score=False)
+media = results ['test_score'].mean().
+desvio_padrao = results['test_score'].std()
+print("Accuracy com cross validation, 5 = [%.2f, %.2f]" % ((media - 2 *desvio_padrao) * 100, (media + 2 * desvio_padrao) * 100))
+
+
+--intervalo de medias para AVALIAR
+media = results ['test_score'].mean().
+desvio_padrao = results['test_score'].std()
+print("Accuracy %.2f %.2f" % (media - 2 * desvio_padrao, media + 2 * desvio_padrao))
+
+
+
+==============================================
+
+Notas
+
+cross validation
+from sklearn.model_selection import cross_validate
+
+passa o modelo (model exemplo decisiontreeclassifier deep=2 etc)
+MAS NAO SELECIONA POR PADRAO COM ALEATORIEDADE. USAR OUTRO QUE O FAÇA:  usar explicitamente Kfold (usa implicitamente mas nos padrões)
+
+explicitar Kfold com shuffle , mas há ainda outros métodos.
+
+principalmente observando com cuidado o DESBALANCEAMENTO. no Kfold não tem STRATIFIED!
+
+por isso pode ser usado STRATIFIED-KFOLD (faz estratificação)
+
+random.seed random randint gera numero entre x w. 
+usando como exemplo idade-carro, soma essa aleatoriedade ao dados-idade-carro.
+Grupo (modelo de carro). pode ser aplicado MODELO PRODUTO.
+GRUPO kFoldGroup.
+
+GrupoKFold.  mas no CROSSVALIDATE precisa saber qual coluna GRUPO.
+
+FASES: (preprocessamento de treino, validacao, etc)
+Usar Pipeline para criar processos de fit (escalar por exemplo) e aplicacao de modelos.
+como ele funciona com estimador, tem fit etc, pode ser usado diretamente com o crossvalid.
+
+PREANALISAR: export_graphviz e graphviz
+pip install graphviz pydot
+
+otimizacao hiperparam  — samples amostras minimos elementos numa folha
+
+seaborn correlation .
+mas ja existe uma lib pra mostrar duma matriz correlacao os hiperparametros otimizados.
+GridSearchCV
+MAS  lembrar de no final de tudo FAZER NOVAMENTE crossvalidation
+
+
+=======================================================
+### organizando os parametros dados para as validacoes. usa Dummy. usa ClassificadorSimples.
+### criacao do dado 'azar' mediante organizacao dos dados raw de um modo que prejudique ao maximo estimador.
+#
+https://cursos.alura.com.br/course/machine-learning-otimizacao-de-modelos-atraves-de-hiperparametros/task/48704
+#
+import pandas as pd
+uri = "https://gist.githubusercontent.com/guilhermesilveira/e99a526b2e7ccc6c3b70f53db43a87d2/raw/1605fc74aa778066bf2e6695e24d53cf65f2f447/machine-learning-carros-simulacao.csv"
+dados = pd.read_csv(uri).drop(columns=["Unnamed: 0"], axis=1)
+dados.head()
+##
+#
+# situação horrível de "azar" onde as classes estão ordenadas por padrão
+dados_azar = dados.sort_values("vendido", ascending=True)
+x_azar = dados_azar[["preco", "idade_do_modelo","km_por_ano"]]
+y_azar = dados_azar["vendido"]
+dados_azar.head()
+#
+# dummy (base-1)
+#
+from sklearn.model_selection import cross_validate
+from sklearn.dummy import DummyClassifier
+import numpy as np
+SEED = 301
+np.random.seed(SEED)
+modelo = DummyClassifier()
+results = cross_validate(modelo, x_azar, y_azar, cv = 10, return_train_score=False)
+media = results['test_score'].mean()
+desvio_padrao = results['test_score'].std()
+print("Accuracy com dummy stratified, 10 = [%.2f, %.2f]" % ((media - 2 * desvio_padrao)*100, (media + 2 * desvio_padrao) * 100))
+# Accuracy com dummy stratified, 10 = [49.79, 53.45]
+#
+# outro ClassificadorSimples (base-2)
+#
+from sklearn.model_selection import cross_validate
+from sklearn.tree import DecisionTreeClassifier
+SEED = 301
+np.random.seed(SEED)
+modelo = DecisionTreeClassifier(max_depth=2)
+results = cross_validate(modelo, x_azar, y_azar, cv = 10, return_train_score=False)
+media = results['test_score'].mean()
+desvio_padrao = results['test_score'].std()
+print("Accuracy com cross validation, 10 = [%.2f, %.2f]" % ((media - 2 * desvio_padrao)*100, (media + 2 * desvio_padrao) * 100))
+# Accuracy com cross validation, 10 = [73.83, 77.73]
+#
+# para o caso espeficico, gerando dados aleatorios para criar um campo novo 'modelo de carro'.
+#
+# gerando dados aleatórios de modelo de carro para simulação de agrupamento ao usar nosso estimador
+np.random.seed(SEED)
+dados['modelo'] = dados.idade_do_modelo + np.random.randint(-2, 3, size=10000)
+dados.modelo = dados.modelo + abs(dados.modelo.min()) + 1
+dados.head()
+## coluna nova nao é 'feature' e sim apenas novo agrupador dos dados; usado para verificar , nao para prever.
+#
+def imprime_resultados(results):
+  media = results['test_score'].mean() * 100
+  desvio = results['test_score'].std() * 100
+  print("Accuracy médio %.2f" % media)
+  print("Intervalo [%.2f, %.2f]" % (media - 2 * desvio, media + 2 * desvio))
+#
+#
+# validacao cruzada que agrupa pelo campo novo 'modelo'
+#
+# GroupKFold para analisar como o modelo se comporta com novos grupos
+from sklearn.model_selection import GroupKFold
+SEED = 301
+np.random.seed(SEED)
+cv = GroupKFold(n_splits = 10)
+modelo = DecisionTreeClassifier(max_depth=2)
+results = cross_validate(modelo, x_azar, y_azar, cv = cv, groups = dados.modelo, return_train_score=False)
+imprime_resultados(results)
+#
+# classificacao com SVC:
+#
+# GroupKFold em um pipeline com StandardScaler e SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+SEED = 301
+np.random.seed(SEED)
+scaler = StandardScaler()
+modelo = SVC()
+pipeline = Pipeline([('transformacao',scaler), ('estimador',modelo)])
+cv = GroupKFold(n_splits = 10)
+results = cross_validate(pipeline, x_azar, y_azar, cv = cv, groups = dados.modelo, return_train_score=False)
+imprime_resultados(results)
+# Accuracy médio 76.68
+# Intervalo [74.28, 79.08]
+#
+#
+modelo =
+DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=2,
+            max_features=None, max_leaf_nodes=None,
+            min_impurity_decrease=0.0, min_impurity_split=None,
+            min_samples_leaf=1, min_samples_split=2,
+            min_weight_fraction_leaf=0.0, presort=False, random_state=None,
+            splitter='best')
+#
+# agora vamos treinar o nosso modelo selecionado de verdade, com dados x_azar e y_azar
+#
+from sklearn.tree import export_graphviz
+import graphviz
+modelo.fit(x_azar, y_azar)
+features = x_azar.columns
+dot_data = export_graphviz(modelo, out_file=None, filled=True, rounded=True, 
+                class_names=["não", "sim"], 
+                feature_names =  features)
+graph = graphviz.Source(dot_data)
+graph
+#
+#
+#plotando arvore
+# NONE
+#
+# plotando curvas de melhor ponto entre teste e treino:
+#
+# roda_arvore_de_decisao
+from sklearn.model_selection import GroupKFold
+def roda_arvore_de_decisao(max_depth):
+  SEED = 301
+  np.random.seed(SEED)
+  cv = GroupKFold(n_splits = 10)
+  modelo = DecisionTreeClassifier(max_depth=max_depth)
+  results = cross_validate(modelo, x_azar, y_azar, cv = cv, groups = dados.modelo, return_train_score=True)
+  train_score = results['train_score'].mean() * 100
+  test_score = results['test_score'].mean() * 100
+  print("Arvore max_depth = %d, treino = %.2f, teste = %.2f" % (max_depth, results['train_score'].mean() * 100, results['test_score'].mean() * 100))
+  tabela = [max_depth, train_score, test_score]
+  return tabela
+resultados = [roda_arvore_de_decisao(i) for i in range (1, 33)]
+resultados = pd.DataFrame(resultados, columns = ["max_depth", "train", "test"])
+resultados.head()
+#
+# seaborn 
+# !pip install seaborn==0.9.0
+#
+import matplotlib.pyplot as plt
+sns.lineplot(x = "max_depth", y = "train", data = resultados)
+sns.lineplot(x = "max_depth", y = "test", data = resultados)
+plt.legend(["Treino", "Teste"])
+#
+resultados.sort_values("test", ascending=False).head()
+#
+
+=======================================================
+
+
+
+==============================================
+-- VALIDACAO CRUZADA
+https://cursos.alura.com.br/course/machine-learning-validando-modelos/task/48271
+# Aleatoriedade no cross validate
+# em vez de passar o numero de slices/splits cv=n. passamos o metodo KFOLD que embaralha antes e no KFold que passa o splits e Shuffle =true para embaralhar.
+SEED = 301
+np.random.seed(SEED)
+cv = KFold(n_splits = 10, shuffle = True)
+modelo = DecisionTreeClassifier(max_depth = 2)
+results = cross_validate(modelo, x, y cv = cv, return_train_score=False)
+imprime_resultados(results)
+### stratified Kfold: (quando há desbalanço entre eventos de classes nas amostras)
+from sklearn.model_selection import StratifiedKFold
+SEED = 301
+np.random.seed(SEED)
+cv = StratifiedKFold(n_splits = 10, shuffle=True)
+modelo = DecisionTreeClassifier(max_depth=2)
+results = cross_validate(modelo, x_azar, y_azar, cv = cv, return_train_score=False)
+imprime_resultados(results)
+
+## agrupamento . adicionado aleatoriedade no dado id-grupo. NAO USO AGORA. https://cursos.alura.com.br/course/machine-learning-validando-modelos/task/48278
+https://cursos.alura.com.br/course/machine-learning-validando-modelos/task/48279
+# group kFoldGroup:
+from sklearn.model_selection import GroupKFold
+SEED = 301
+np.random.seed(SEED)
+cv = GorupKFold(n_splits = 10)
+modelo = DecisionTreeClassifier(max_depth=2)
+results = cross_validate(modelo, x_azar, cv = cv, groups = dados.modelo, return_train_score=False)
+imprime_resultados(results)
+# pipeline
+https://cursos.alura.com.br/course/machine-learning-validando-modelos/task/48280
+# pipeline:
+from sklearn.pipeline import Pipeline
+SEED = 301
+np.random.seed(SEED)
+scaler =StandardScaler()
+modelo = SVC()
+pipeline = Pipeline([('transformacao', scaler), ('estimador', modelo)])
+cv = GroupKFold(n_splits = 10)
+result = cross_validate(pipeline, x_azar, y_azar, cv = cv, groups = dados.modelo, return_train_score=False)
+imprime_resultados(results)
+
+
+# embaralha antes de kfold (slices/splits): usa o 
+https://cursos.alura.com.br/course/machine-learning-validando-modelos/task/48275
+#shuffle no kfold:
+SEED = 301
+np.random.seed(SEED)
+cv = KFold(n_splits = 10, shuffle = True)
+modelo = DecisionTreeClassifier(max_depth = 2)
+results = cross_validate(modelo, x, y cv = cv, return_train_score=False)
+imprime_resultados(results)
+
+# agora balanceando com stratified estratificação
+https://cursos.alura.com.br/course/machine-learning-validando-modelos/task/48276
+from sklearn.model_selection import StratifiedKFold
+SEED = 301
+np.random.seed(SEED)
+cv = StratifiedKFold(n_splits = 10)
+modelo = DecisionTreeClassifier(max_depth=2)
+results = cross_validate(modelo, x_azar, y_azar, cv = cv, return_train_score=False)
+imprime_resultados(results)
+
+
+
+#agora avançando:
+https://cursos.alura.com.br/course/machine-learning-otimizacao-de-modelos-atraves-de-hiperparametros
+# testando aninhado multiplos hiperparametros
+def busca():
+  resultados = []
+  for max_depth in range(1,33):
+    for min_samples_leaf in [128, 192, 256, 512]:
+        tabela = roda_arvore_de_decisao(max_depth, min_samples_leaf)
+        resultados.append(tabela)
+  resultados = pd.DataFrame(resultados, columns= ["max_depth","min_samples_leaf","train","test"])
+  return resultados
+resultados = busca()
+resultados.head()
+
+### roda_arvore_de_decisao
+def roda_arvore_de_decisao(max_depth, min_samples_leaf):
+  SEED = 301
+  np.random.seed(SEED)
+  cv = GroupKFold(n_splits = 10)
+  modelo = DecisionTreeClassifier(max_depth=max_depth, min_samples_leaf = min_samples_leaf)
+  results = cross_validate(modelo, x_azar, y_azar, cv = cv, groups = dados.modelo, return_train_score=True)
+  train_score = results['train_score'].mean() * 100
+  test_score = results['test_score'].mean() * 100
+  print("Arvore max_depth = %d, min_samples_leaf = %d, treino = %.2f, teste = %.2f" % (max_depth, min_samples_leaf, train_score, test_score))
+  tabela = [max_depth, min_samples_leaf, train_score, test_score]
+  return tabela
+
+
+
+
+###imprime_resultados::
+def imprime_resultados(results):
+    media = results['test_score'].mean()
+    desvio_padrao = results['test_score'].std()
+    print("Accuracy médio: %.2f" % (media * 100).)
+    print("Accuracy intervalo: [%.2f, %.2f]" % ((media - 2 * desvio_padrao)*100))
+
+##
+##
+
+
+##
+##230130
+##racionalizando melhor esses testes por multiplos hiperparametros:
+https://cursos.alura.com.br/course/machine-learning-otimizacao-com-exploracao-aleatoria/task/49092
+# antes fazia 'grid search'
+# agora 'random search'
+
+#antes:
+# antes fazia 'grid search'
+from sklearn.model_selection import GridSearchCV, KFold
+SEED=301
+np.random.seed(SEED)
+espaco_de_parametros = {
+    "max_depth" : [3, 5],
+    "min_samples_split": [32, 64, 128],
+    "min_samples_leaf": [32, 64, 128],
+    "criterion": ["gini", "entropy"]
+
+}
+busca = GridSearchCV(DecisionTreeClassifier(),
+                    espaco_de_parametros,
+                    cv = KFold(n_splits = 5, shuffle=True))
+busca.fit(x_azar, y_azar)
+resultados = pd.DataFraframe(busca.cv_results_)
+resultados.head()
+
+# agora 'random search'
+from sklearn.model_selection import RandomizedSearchCV
+SEED=301
+np.random.seed(SEED)
+espaco_de_parametros = {
+    "max_depth" : [3, 5],
+    "min_samples_split": [32, 64, 128],
+    "min_samples_leaf": [32, 64, 128],
+    "criterion": ["gini", "entropy"]
+
+}
+busca = RandomizedSearchCV(DecisionTreeClassifier(),
+                    espaco_de_parametros, 
+                    n_iter = 16,
+                    cv = KFold(n_splits = 5),
+                          random_state = SEED)
+busca.fit(x_azar, y_azar,groups = dados.modelo)
+resultados = pd.DataFrame(busca.cv_results_)
+resultados.head()
+# saber quão bem:
+from sklearn.model_selection import cross_val_score
+scores = cross_val_score(busca, x_azar, y_azar, cv = KFold(n_splits=5, shuffle=True))
+scores
+# array([0.7755, 0.78 , 0.8055, 0.7855, 0.774 ])
+#imprimir
+from sklearn.model_selection import cross_val_score
+scores = cross_val_score(busca, x_azar, y_azar, cv = KFold(n_splits=5, shuffle=True))
+imprime_score(scores)
+# Accuracy médio 78.69
+# Intervalo [76.70, 80.68]
+# Melhor modelo ESTIMADOR:
+melhor = busca.best_estimator_
+print(melhor)
+DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=5,
+            max_features=None, max_leaf_nodes=None,
+            min_impurity_decrease=0.0, min_impurity_split=None,
+            min_samples_leaf=128, min_samples_split=128,
+            min_weight_fraction_leaf=0.0, presort=False, random_state=None,
+            splitter='best')
+# gerando ARVORE:
+features = x_azar.columns
+dot_data = export_graphviz(melhor, out_file=None, filled=True, rounded=True,
+                        class_names=["não", "sim"],
+                        feature_names = features)
+graph = graphviz.Source(dot_data)
+graph
+#
+# agora espaço continuo mais complexo:
+https://cursos.alura.com.br/course/machine-learning-otimizacao-com-exploracao-aleatoria/task/49094
+from scipy.stats import randint
+SEED=301
+np.random.seed(SEED)
+espaco_de_parametros = {
+    "max_depth" : [3, 5, 10, 15, 20, 30, None],
+    "min_samples_split" : randint(32, 128),
+    "min_samples_leaf" : randint(32, 128),
+    "criterion" : ["gini", "entropy"]
+
+}
+busca = RandomizedSearchCV(DecisionTreeClassifier(),
+                    espaco_de_parametros, 
+                    n_iter = 16,
+                    cv = KFold(n_splits = 5, shuffle=True),
+                          random_state = SEED)
+busca.fit(x_azar, y_azar)
+resultados = pd.DataFrame(busca.cv_results_)
+resultados.head()
+# imprime_resultados
+scores = cross_val_score(busca, x_azar, y_azar, cv = KFold(n_splits=5, shuffle=True))
+imprime_score(scores)
+melhor = busca.best_estimator_
+print(melhor)
+#        max_features=None, max_leaf_nodes=None,
+#        min_impurity_decrease=0.0, min_impurity_split=None,
+#        min_samples_leaf=71, min_samples_split=100,
+#        min_weight_fraction_leaf=0.0, presort=False, random_state=None,
+#        splitter='best')
+##
+## explorar mais???
+https://cursos.alura.com.br/course/machine-learning-otimizacao-com-exploracao-aleatoria/task/49095
+# ordenar resultados
+resultados_ordenados_pela_media = resultados.sort_values("mean_test_score", ascending=False)
+# ou for
+resultados_ordenados_pela_media = resultados.sort_values("mean_test_score", ascending=False)
+for indice, linha in resultados_ordenados_pela_media.iterrows():
+  print(indice)
+# ou
+resultados_ordenados_pela_media = resultados.sort_values("mean_test_score", ascending=False)
+for indice, linha in resultados_ordenados_pela_media.iterrows():
+  print("%.3f +- (%.3f) %s" % (linha.mean_test_score, linha.std_test_score*2, linha.params))
+# resultados
+# parte:
+# 0.787 +- (0.019) {'criterion': 'entropy', 'max_depth': 3, 'min_samples_leaf': 71, 'min_samples_split': 100}
+# 0.784 +- (0.024) {'criterion': 'entropy', 'max_depth': 5, 'min_samples_leaf': 73, 'min_samples_split': 72}
+# 0.784 +- (0.024) {'criterion': 'gini', 'max_depth': 5,
+## ou mais iteracoes:
+#Accuracy médio 78.69
+#Intervalo [77.64, 79.74]
+#DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=3,
+#max_features=None, max_leaf_nodes=None,
+#min_impurity_decrease=0.0, min_impurity_split=None,
+#min_samples_leaf=53, min_samples_split=60,
+#min_weight_fraction_leaf=0.0, presort=False, random_state=None,
+#splitter='best')
+
+## grid search mais longo: e com randomforest
+https://cursos.alura.com.br/course/machine-learning-otimizacao-com-exploracao-aleatoria/task/49096
+from sklearn.ensemble import RandomForestClassifier
+import time 
+SEED=301
+np.random.seed(SEED)
+espaco_de_parametros = {
+    "n_estimators" : [10, 100],
+    "max_depth" : [3, 5],
+    "min_samples_split": [32, 64, 128],
+    "min_samples_leaf": [32, 64, 128],
+    "bootstrap" : [True, False],
+    "criterion": ["gini", "entropy"]
+
+}
+tic = time.time()
+busca = GridSearchCV(RandomForestClassifier(),
+                    espaco_de_parametros,
+                    cv = KFold(n_splits = 5, shuffle=True))
+busca.fit(x_azar, y_azar)
+tac = time.time()
+tempo_que_passou = tac - tic
+print("Tempo %.2f segundos" % tempo_que_passou)
+resultados = pd.DataFrame(busca.cv_results_)
+resultados.head()
+# 5 melhores:
+resultados_ordenados_pela_media = resultados.sort_values("mean_test_score", ascending=False)
+for indice, linha in resultados_ordenados_pela_media[:5].iterrows():
+  print("%.3f +-(%.3f) %s" % (linha.mean_test_score, linha.std_test_score*2, linha.params))
+#0.780 +-(0.020) {'bootstrap': False, 'criterion': 'gini', 'max_depth': 5, 'min_samples_leaf': 32, #'min_samples_split': 64, 'n_estimators': 10}
+#0.778 +-(0.020) {'bootstrap': True, 'criterion': 'gini', 'max_depth': 5, 'min_samples_leaf': 32, #'min_samples_split': 128, 'n_estimators': 10}
+## crossvalidation com tempo [MUUUTIO tempo]
+tic = time.time()
+scores = cross_val_score(busca, x_azar, y_azar, cv = KFold(n_splits=5, shuffle=True))
+tac = time.time()
+tempo_passado = tac - tic
+print("Tempo %.2f segundos" % tempo_passado)
+imprime_score(scores)
+melhor = busca.best_estimator_
+print(melhor)
+## fazendo o mesmo mas agora com RandomizedSearchCV
+## https://cursos.alura.com.br/course/machine-learning-otimizacao-com-exploracao-aleatoria/task/49097
+##
+# grid:
+from sklearn.ensemble import RandomForestClassifier
+import time 
+SEED=301
+np.random.seed(SEED)
+espaco_de_parametros = {
+    "n_estimators" : [10, 100],
+    "max_depth" : [3, 5],
+    "min_samples_split": [32, 64, 128],
+    "min_samples_leaf": [32, 64, 128],
+    "bootstrap" : [True, False],
+    "criterion": ["gini", "entropy"]
+}
+tic = time.time()
+busca = GridSearchCV(RandomForestClassifier(),
+                    espaco_de_parametros,
+                    cv = KFold(n_splits = 5, shuffle=True))
+busca.fit(x_azar, y_azar)
+tac = time.time()
+tempo_que_passou = tac - tic
+print("Tempo %.2f segundos" % tempo_que_passou)
+resultados = pd.DataFrame(busca.cv_results_)
+resultados.head()
+#
+# agora RandomizedSearchCV
+#
+tic = time.time()
+busca = RandomizedSearchCV(RandomForestClassifier(),
+                    espaco_de_parametros,
+                    n_iter = 20,
+                    cv = KFold(n_splits = 5, shuffle=True))
+busca.fit(x_azar, y_azar)
+tac = time.time()
+tempo_que_passou = tac - tic
+print("Tempo %.2f segundos" % tempo_que_passou)
+# 5 melhores:
+resultados_ordenados_pela_media = resultados.sort_values("mean_test_score", ascending=False)
+for indice, linha in resultados_ordenados_pela_media[:5].iterrows():
+  print("%.3f +-(%.3f) %s" % (linha.mean_test_score, linha.std_test_score*2, linha.params))
+# 
+# 0.776 +-(0.025) {'n_estimators': 100, 'min_samples_split': 32, 'min_samples_leaf': 32, 'max_depth': 5,  #'criterion': 'gini', 'bootstrap': False}
+# 0.776 +-(0.023) {'n_estimators': 100, 'min_samples_split': 32, 'min_samples_leaf': 128, 'max_depth': 3, #'criterion': 'gini', 'bootstrap': False}
+# crossvalidation
+tic = time.time()
+scores = cross_val_score(busca, x_azar, y_azar, cv = KFold(n_splits=5, shuffle=True))
+tac = time.time()
+tempo_passado = tac - tic
+print("Tempo %.2f segundos" % tempo_passado)
+imprime_score(scores)
+melhor = busca.best_estimator_
+print(melhor)
+# Tempo 154.63 segundos
+# Accuracy médio 77.59
+# Intervalo [76.47, 78.71]
+# RandomForestClassifier(bootstrap=False, class_weight=None, criterion='gini',
+# max_depth=5, max_features='auto', max_leaf_nodes=None,
+# min_impurity_decrease=0.0, min_impurity_split=None,
+# min_samples_leaf=32, min_samples_split=32,
+# min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
+# oob_score=False, random_state=None, verbose=0,
+# warm_start=False)
+#
+## aprofundando parametros RandomizedSearchCV:
+#
+SEED=301
+np.random.seed(SEED)
+espaco_de_parametros = {
+    "n_estimators" : randint(10, 101),
+    "max_depth" : randint(3, 6),
+    "min_samples_split": randint(32, 129),
+    "min_samples_leaf": randint(32, 129),
+    "bootstrap" : [True, False],
+    "criterion": ["gini", "entropy"]
+}
+tic = time.time()
+busca = RandomizedSearchCV(RandomForestClassifier(),
+                    espaco_de_parametros,
+                    n_iter = 80,
+                    cv = KFold(n_splits = 5, shuffle=True))
+busca.fit(x_azar, y_azar)
+tac = time.time()
+tempo_que_passou = tac - tic
+print("Tempo %.2f segundos" % tempo_que_passou)
+resultados = pd.DataFrame(busca.cv_results_)
+resultados.head()
+#
+# resultados 5 melhores:
+#
+resultados_ordenados_pela_media = resultados.sort_values("mean_test_score", ascending=False)
+for indice, linha in resultados_ordenados_pela_media[:5].iterrows():
+  print("%.3f +-(%.3f) %s" % (linha.mean_test_score, linha.std_test_score*2, linha.params))
+#
+# 0.779 +-(0.025) {'bootstrap': False, 'criterion': 'entropy', 'max_depth': 5, 'min_samples_leaf': 84, #'min_samples_split': 89, 'n_estimators': 48}
+# 0.778 +-(0.031) {'bootstrap': False, 'criterion': 'entropy', 'max_depth': 5, 'min_samples_leaf': 32, #'min_samples_split': 96, 'n_estimators': 18}
+#
+##
+##
+##
+## agora tudo SEM validacao cruzada
+## https://cursos.alura.com.br/course/machine-learning-otimizacao-com-exploracao-aleatoria/task/49098
+##
+# Até o momento, estávamos trabalhando com duas fases: a fase de treino e teste, e a fase de validação com #cross_val_score() (nested cross validation). Na prática, agora teremos três fases: uma fase de treino do modelo #(ou de vários modelos) na busca de otimizar os hiperparâmetros; uma fase de teste, comparando os modelos para #encontrar os melhores resultados; e uma fase de validação, tentando alcançar uma estimativa real desse #algorítimo.
+#
+# Ou seja, teremos que separar três conjuntos de dados, e não mais dois, como vínhamos fazendo com a função #train_test_split().
+#
+# usando StratifiedShuffleSplit em lugar de KFold com 5 iteracoes
+#
+from sklearn.model_selection import StratifiedShuffleSplit
+SEED=301
+np.random.seed(SEED)
+espaco_de_parametros = {
+    "n_estimators" : randint(10, 101),
+    "max_depth" : randint(3, 6),
+    "min_samples_split": randint(32, 129),
+    "min_samples_leaf": randint(32, 129),
+    "bootstrap" : [True, False],
+    "criterion": ["gini", "entropy"]
+}
+split = StratifiedShuffleSplit(n_splits = 1, test_size = 0.2)
+tic = time.time()
+busca = RandomizedSearchCV(RandomForestClassifier(),
+                    espaco_de_parametros,
+                    n_iter = 5,
+                    cv = split)
+busca.fit(x_azar, y_azar)
+tac = time.time()
+tempo_que_passou = tac - tic
+print("Tempo %.2f segundos" % tempo_que_passou)
+resultados = pd.DataFrame(busca.cv_results_)
+resultados.head()
+#
+# variáveis:
+from sklearn.model_selection import train_test_split
+SEED=301
+np.random.seed(SEED)
+x_treino_teste, x_validacao, y_treino_teste, y_validacao = train_test_split(x_azar, y_azar, test_size=0.2, shuffle=True, stratify=y_azar)
+print(x_treino_teste.shape)
+print(x_validacao.shape)
+print(y_treino_teste.shape)
+print(y_validacao.shape)
+#  (8000, 3) (2000, 3) (8000,) (2000,)
+#
+# nova estratificação
+espaco_de_parametros = {
+    "n_estimators" : randint(10, 101),
+    "max_depth" : randint(3, 6),
+    "min_samples_split": randint(32, 129),
+    "min_samples_leaf": randint(32, 129),
+    "bootstrap" : [True, False],
+    "criterion": ["gini", "entropy"]
+
+}
+split = StratifiedShuffleSplit(n_splits = 1, test_size = 0.25)
+tic = time.time()
+busca = RandomizedSearchCV(RandomForestClassifier(),
+                    espaco_de_parametros,
+                    n_iter = 5,
+                    cv = split)
+busca.fit(x_treino_teste, y_treino_teste)
+tac = time.time()
+tempo_que_passou = tac - tic
+print("Tempo %.2f segundos" % tempo_que_passou)
+resultados = pd.DataFrame(busca.cv_results_)
+resultados.head()
+#
+# score e tempo
+tic = time.time()
+scores = cross_val_score(busca, x_validacao, y_validacao, cv = split)
+tac = time.time()
+tempo_passado = tac - tic
+print("Tempo %.2f segundos" % tempo_passado)
+scores
+#
+# 
+#
+
+##
+#
+
+
+
+
+
+
+##
+##
+##
+##
+
+****************************
+****************************
+## voltando aula
+## https://cursos.alura.com.br/course/reducao-dimensionalidade/task/53752
+
+##
+
+## n_estimators = 100 novo padrao para RandomForestClassifier
+
+from sklearn.model_selection import train_test_split
+from numpy import random
+SEED = 123143
+random.seed(SEED)
+valores_exames = resultados_exames.drop(columns=["id", "diagnostico"])
+diagnostico = resultados_exames.diagnostico
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames, diagnostico)
+
+from sklearn.ensemble import RandomForestClassifier
+classificador = RandomForestClassifier(n_estimators = 100)
+classificador.fit(treino_x, treino_y)
+print(classificador.score(teste_x, teste_y))
+
+
+
+
+## valores faltantes
+# https://cursos.alura.com.br/course/reducao-dimensionalidade/task/53753
+
+#
+resultados_exames.isnull().sum()
+
+#
+treino_x, teste_x, treino_y, teste_y = train_test_split(valores_exames_v1, diagnostico, test_size = 0.3)
+
+## baseline com DummyClassifier
+# https://cursos.alura.com.br/course/reducao-dimensionalidade/task/53754
+
+from sklearn.dummy import DummyClassifier
+SEED = 123143
+random.seed(SEED)
+classificador_bobo = DummyClassifier(strategy = "most_frequent")
+classificador_bobo.fit(treino_x, treino_y)
+print("Resultado da classificação boba %.2f%%" % (classificador_bobo.score(teste_x, teste_y)* 100))
+
+
+
+
+
+****************************
+****************************
+
+############ off springboot jpa tips ############# sbt
+#sbt 
+https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/116068
+
+
+# https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/115964
+# antes . list simples com todos elementos
+@RestController
+@RequestMapping("medicos")
+public class MedicoController {
+
+    @Autowired
+    private MedicoRepository repository;
+
+    @PostMapping
+    @Transactional
+    public void cadastrar(@RequestBody @Valid DadosCadastroMedico dados) {
+        repository.save(new Medico(dados));
+    }
+
+    @GetMapping
+    public List<DadosListagemMedico> listar() {
+        return repository.findAll().stream.map(DadosListagemMedico::new);
+    }
+	
+
+# paginacao page
+
+# https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/115966
+    @GetMapping
+    public Page<DadosListagemMedico> listar(Pageable paginacao) {
+        return repository.findAll(paginacao).map(DadosListagemMedico::new);
+    }
+	http://localhost:8080/medicos?size=1
+
+
+# ordenacao  na URL sort=atributotal
+# https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/115967
+http://localhost8080/medicos?sort=crm,desc&size=2&page=1
+# tambem DEFAULT:
+lista(@PageableDefault(size = 10, sort = {"nome"})
+# log sql 
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+# novos nomes paginacao: application.properties
+spring.data.web.pageable.page-parameter=pagina
+spring.data.web.pageable.size-parameter=tamanho
+spring.data.web.sort.sort-parameter=ordem
+
+
+# UPDATE
+#ID
+# https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/115968
+
+package med.voll.api.medico;
+
+public record DadosListagemMedico(Long id, String nome, String email, String crm, Especialidade especialidade) {
+
+    public DadosListagemMedico(Medico medico) {
+        this(medico.getId(), medico.getNome(), medico.getEmail(), medico.getCrm(), medico.getEspecialidade());
+    }
+
+}
+
+# https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/115969
+# UPDTAE completando
+# exemplo
+
+  
+
+package med.voll.api.medico;
+
+import jakarta.validation.constraints.NotNull;
+import med.voll.api.endereco.DadosEndereco;
+
+public record DadosAtualizacaoMedico(
+        @NotNull
+        Long id,
+        String nome,
+        String telefone,
+        DadosEndereco endereco) {
+}
+    public void atualizarInformacoes(DadosAtualizacaoMedico dados) {
+        if (dados.nome() != null) {
+            this.nome = dados.nome();
+        }
+        if (dados.telefone() != null) {
+            this.telefone = dados.telefone();
+        }
+        if (dados.endereco() != null) {
+            this.endereco.atualizarInformacoes(dados.endereco());
+        }
+
+    }
+	
+# DTo evita Mass Assignment Attack ou Ataque de Atribuição em Massa
+
+#DELETE fisico com delete
+https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/115970
+
+# anota id delete get com path em conjunto com "{id}"
+
+
+# DELETE LÓGICO com campo ativo
+https://cursos.alura.com.br/course/spring-boot-3-desenvolva-api-rest-java/task/115971
+alter table medicos add ativo tinyint;
+update medicos set ativo =1;
+#
+public void excluir() {
+        this.ativo = false;
+    }
+#
+    @DeleteMapping("/{id}")
+    @Transactional
+    public void excluir(@PathVariable Long id) {
+        var medico = repository.getReferenceById(id);
+        medico.excluir();
+    }
+###MUDAR todo o resto , cadastros e listagens para passar a prever esse ativo
+# exemplo
+    public Page<DadosListagemMedico> listar(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao) {
+        return repository.findAllByAtivoTrue(paginacao).map(DadosListagemMedico::new);
+    }
+# +
+package med.voll.api.medico;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+public interface MedicoRepository extends JpaRepository<Medico, Long> {
+    Page<Medico> findAllByAtivoTrue(Pageable paginacao);
+}
+
+
+
+
+
+

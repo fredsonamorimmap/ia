@@ -1,0 +1,14 @@
+- Maquina
+	- tempo recalque: alto
+	- pressão recalque: alta
+	- dosagem: ajustar ?escalonar velocidade dosagem?
+	- temperatura molde: alta
+	- força fechamento molde: ajustar ?
+	- fechamento molde: resíduos resinas
+	* ferramenta desabalanceada
+	* ajustar restrições de fluxo partes cavidades
+	* utilizar velocidade escalonada injeção
+
+- Material
+	- temperatura polímero: alta
+

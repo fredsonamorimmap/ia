@@ -1,0 +1,13 @@
+- Maquina
+	- alimentacao: ajustar
+	- dosajem: ajustar
+	- pressão recalque: baixa
+	- tempo recalque: baixo
+	- velocidade injeção: baixa
+	- temperatura cilindro: baixa
+	- temperatura bico injeção: baixa
+	- recuo bico injeção: recuar a cada injeção
+	- temperatura molde: baixa
+
+- Material
+	- umidade: alta

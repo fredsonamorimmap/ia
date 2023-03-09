@@ -1,0 +1,15 @@
+- Maquina
+	- raio bico: ajustar
+	- bico injeção: irregular
+	- temperatura injeção: alta
+	- pressao injeção: alta
+	- tempo pressao injeção: baixo
+	- curso descompressao: baixo
+	- pressao recalque: baixa
+	- orificio bico: grande
+	- temperatura bico: variando
+	- temperatura rosca canhão: alta
+
+
+- Material
+	- cilindro: contaminantes

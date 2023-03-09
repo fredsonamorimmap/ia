@@ -1,0 +1,6 @@
+- Maquina
+	- pressão injeção: alta
+	- volume injeção: alto
+	- pressão recalque: alta
+	- tempo resfriamento: baixo
+	- dimensão canal injeção (runner): baixo

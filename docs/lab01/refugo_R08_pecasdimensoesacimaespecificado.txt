@@ -1,0 +1,7 @@
+Maquina
+	- velocidade injeção: alta
+	- pressão injeção: alta
+	- temperatura cilindro:  baixa /alta ajustar
+	- temperatura bico injeção: baixa
+
+

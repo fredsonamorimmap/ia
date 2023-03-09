@@ -1,0 +1,11 @@
+Maquina
+	- pressao recalque: baixo
+	- tempo recalque: baixo
+
+	- ponto de contracao próximo ao canal de injeção
+	- temperatura molde: alta
+	- temperatura massa: alta
+	
+	- ponto de contração distante do ponto de injeção
+	- temperatura molde: baixo
+	- temperatura massa: baixo

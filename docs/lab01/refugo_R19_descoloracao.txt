@@ -1,0 +1,9 @@
+- Maquina
+	- temperatura cilindro: alta
+	- temperatura bico: alta
+	- pressão recalque: alta
+	- tempo injeção: alto
+	- pressão injeção: alta
+	- velocidade injeção: alta
+	- temperatura molde: baixa
+

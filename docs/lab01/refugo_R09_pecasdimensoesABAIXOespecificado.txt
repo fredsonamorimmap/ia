@@ -1,0 +1,10 @@
+- Maquina
+	- pressão recalque: baixo
+	- tempo recalque: baixo
+	- temperatura molde: alta
+	- temperatura bico injeção: baixo
+	- tempo injeção: baixo
+	- contrapressão: baixa
+	- carga material canhão: baixa
+	- velocidade injeção: baixa
+	- temperatura molde: baixa

@@ -1,0 +1,13 @@
+- Maquina
+	- temperatura cilindro: baixa
+	- temperatura bico: baixa
+	- temperatura molde: baixa
+	*- temperatura polimero: baixa
+	- pressão injeção: baixa
+	- tempo recalque: baixo
+	- velocidade injeção: baixa
+	- contrapressão: baixa
+	- pressão injeção: baixa
+	- velocidade dosajem: alta
+	- tempo ciclo: baixo
+	- cilindro: resina contaminantes no cilindro

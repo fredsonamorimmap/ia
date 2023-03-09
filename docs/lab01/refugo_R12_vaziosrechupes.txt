@@ -1,0 +1,9 @@
+Material
+	-temperatura materia-prima: baixa
+
+Maquina
+	-pressao recalque: baixa
+	-tempo recalque: baixo
+	-tempo injecao: baixo
+	-tempo resfriamento: baixo
+	-temperatura molde: ajustar: baixa?

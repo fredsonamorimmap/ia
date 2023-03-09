@@ -1,0 +1,7 @@
+- Maquina
+	- temperatura massa: baixa
+	- temperatura molde: baixa
+	- pressão recalque: baixa
+	- velocidade injeção: baixa
+	- rotação rosca: ajustar?
+

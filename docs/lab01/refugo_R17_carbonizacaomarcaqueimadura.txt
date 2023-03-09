@@ -1,0 +1,4 @@
+- Maquina
+	- velocidade injeção: alta
+	- curso descompressão: alto
+	- temperatura cilindro: alta

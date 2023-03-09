@@ -1,0 +1,7 @@
+- Maquina
+	- pressão injeção: baixa
+	- temperatura ciclindro: baixa
+	- temperatura bico: baixa
+	- pressão recalque: ajustar?
+	- tempo recalque: ajustar?
+	

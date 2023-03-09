@@ -1,0 +1,5 @@
+Maquina
+	- pressao injeção: alta
+	- velocidade dosagem: alta
+	- temperatura cilindro: alta
+

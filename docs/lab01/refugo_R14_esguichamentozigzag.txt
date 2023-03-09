@@ -1,0 +1,5 @@
+- Maquina
+	- velocidade inicial injeção: alta
+	- temperatura polimero: baixa
+	- ponto injeção restrito: ajustar?
+
